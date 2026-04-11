@@ -1,0 +1,9 @@
+{
+  "scale_range": [
+    5.0,
+    10.0
+  ],
+  "gamma": 1.0,
+  "threshold": 0.15,
+  "dilate_radius": 1
+}

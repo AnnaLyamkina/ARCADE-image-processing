@@ -7,6 +7,8 @@ from typing import NamedTuple
 import cv2
 import numpy as np
 
+# visual control showed strong frame artifacts
+EXCLUDE_VAL_SAMPLES = ['58.png', '87.png', '111.png', '158.png', '189.png']
 
 class Sample(NamedTuple):
     """A single sample from the dataset: image, binary vessel mask, and file path."""
@@ -46,12 +48,6 @@ class ArcadeDataset:
         with open(self.annotations_file, "r") as f:
             self.coco = json.load(f)
         
-        # Build image_id -> filename mapping
-        self.image_id_to_path = {}
-        for img_info in self.coco["images"]:
-            img_id = img_info["id"]
-            filename = img_info["file_name"]
-            self.image_id_to_path[img_id] = self.images_dir / filename
         
         # Build image_id -> list of polygons mapping (from annotations)
         self.image_id_to_polygons = {}
@@ -68,8 +64,16 @@ class ArcadeDataset:
                 self.image_id_to_polygons[img_id].append(polygon)
         
         # Image IDs in order
-        self.image_ids = sorted(self.coco["images"], key=lambda x: x["id"])
-    
+        self.image_ids = sorted((img for img in self.coco["images"] 
+                                 if self.split == "val" and img["file_name"] not in EXCLUDE_VAL_SAMPLES), key=lambda x: x["id"])
+        # Build image_id -> filename and filename -> idx mapping
+        self.image_id_to_path = {}
+        self.filename_to_idx = {}
+        # Build mappings from filtered list only
+        for idx, img in enumerate(self.image_ids):
+            self.image_id_to_path[img["id"]] = self.images_dir / img["file_name"]
+            self.filename_to_idx[img["file_name"]] = idx 
+            
     def __len__(self) -> int:
         """Return dataset size."""
         return len(self.image_ids)
@@ -112,3 +116,8 @@ class ArcadeDataset:
                 cv2.fillPoly(mask, [coords], 1)
         
         return Sample(image=img, mask=mask, path=img_path)
+
+    def get_by_filename(self, filename: str) -> Sample:
+        if self.split == "val" and filename in EXCLUDE_VAL_SAMPLES:
+            raise ValueError(f"{filename} is excluded from the dataset")
+        return self[self.filename_to_idx[filename]]
