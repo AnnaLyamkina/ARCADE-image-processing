@@ -15,7 +15,7 @@ The focus is not only on perceptual image quality, but on **task-based evaluatio
 * How does low-dose (Poisson) noise affect vessel visibility in angiography images?
 * Do classical filters improve or degrade segmentation performance?
 * Can a self-supervised CNN denoiser (Noise2Void) better preserve vessel structures?
-* Is improved image quality (e.g., SSIM) correlated with better segmentation?
+* Is improved image quality correlated with better segmentation?
 
 ---
 
@@ -24,6 +24,7 @@ The focus is not only on perceptual image quality, but on **task-based evaluatio
 * **ARCADE coronary angiography dataset** (syntax task only)
 * 1000 training images (used for self-supervised denoising, no masks needed)
 * 200 validation images with vessel annotations (used for benchmarking)
+!!! Background ROI may contain unlabelled small vessels (<1.5mm), as SYNTAX annotations only cover major coronary segments. Metrics are consistent across filters but absolute CNR values may be slightly underestimated.
 
 **Data format:**
 
@@ -46,36 +47,27 @@ The focus is not only on perceptual image quality, but on **task-based evaluatio
 │           └── annotations/val.json
 ├── datasets/
 │   └── arcade_dataset.py          # ArcadeDataset class (loads images + masks)
-├── algorithms/                    # One file per filter (inherit base_filter.py)
-│   ├── base_filter.py
+├── algorithms/                    # One file per filter 
 │   ├── gaussian.py
 │   ├── bilateral.py
 │   ├── frangi.py
 │   └── n2v.py
 ├── metrics/                       # One file per metric group
-│   ├── roi_metrics.py             # SNR, CNR
-│   ├── image_quality.py           # SSIM, BRISQUE
-│   └── timing.py                  # Execution time
+│   ├── snr_cnr.py             # SNR, CNR
+│   └── dice.py           # Frangi + Dice for task-based evaluation
+│   
 ├── training/
 │   └── train_n2v.py               # N2V training loop and N2VDataset
 ├── notebooks/
 │   ├── 01_data_exploration.ipynb  # Explore val dataset, compute baselines
-│   ├── 02_filter_comparison.ipynb # Apply filters, compute metrics, save CSV
-│   └── 03_results_analysis.ipynb  # Load CSV, produce plots
+│   ├── 02_low_dose.ipynb # Apply dose reduction, compute metrics
+│   └── 03_filter_comparison.ipynb  # Apply filters to denoise, produce plots
 ├── results/                       # Generated outputs (git-ignored)
 │   └── metrics_table.csv          # Benchmark results
 ├── .gitignore                     # Excludes data/, results/, etc.
 ├── .env                           # Local paths (ARCADE_ROOT=data/)
 └── README.md                      # This file
 ```
-
-**Conventions:**
-- All filters implement `apply(image) → image` (same shape/dtype)
-- `ArcadeDataset.__getitem__` returns `Sample(image, mask, path)` namedtuple
-- Masks: binary uint8 {0,1}
-- COCO JSON: image_id → filename, filename → polygons (rasterized with cv2.fillPoly)
-
----
 
 ## Methods
 
@@ -84,7 +76,7 @@ The focus is not only on perceptual image quality, but on **task-based evaluatio
 To simulate reduced radiation dose, Poisson noise is applied to the images:
 
 * Intensity scaling → Poisson sampling → rescaling
-* Noise levels: **25%, 10%, 5% dose**
+* Noise levels: **50%, 25%, 10% dose**
 
 This approximates photon-counting statistics in X-ray imaging.
 
@@ -99,10 +91,6 @@ We compare representative approaches from different paradigms:
 * Gaussian filter (baseline smoothing)
 * Bilateral filter (edge-preserving)
 * CLAHE (Contrast Limited Adaptive Histogram Equalization)
-
-**Task-specific filter**
-
-* Frangi vesselness filter (enhances tubular structures, black_ridges=True)
 
 **Learning-based**
 
@@ -128,8 +116,6 @@ This allows controlled evaluation of how preprocessing affects segmentation.
 
 * SNR (Signal-to-Noise Ratio)
 * CNR (Contrast-to-Noise Ratio)
-* SSIM (Structural Similarity Index)
-* BRISQUE (Blind/Referenceless Image Spatial Quality Evaluator)
 
 ### Task-based metrics
 
@@ -142,19 +128,15 @@ This allows controlled evaluation of how preprocessing affects segmentation.
 
 Results are saved to `results/metrics_table.csv` for analysis.
 
-Results are saved to `results/metrics_table.csv` for analysis.
-
----
 
 ## Experimental Setup
 
-For each noise level (25%, 10%, 5%):
+For each noise level (50%, 25%, 10%, 5%):
 
 1. Apply noise to clean images
 2. Apply each denoising method
 3. Run segmentation pipeline
 4. Compute metrics
-5. Compare against ground truth masks
 
 ---
 
@@ -194,7 +176,7 @@ Example structure:
 * Classical filters improve SNR but may **reduce vessel contrast**, harming segmentation
 * Bilateral filtering preserves edges better than Gaussian but struggles at very low dose
 * Noise2Void improves both perceptual quality and Dice score at moderate noise levels
-* At extreme noise (5%), all methods degrade, but learning-based approaches remain more stable
+
 
 ---
 
@@ -202,7 +184,7 @@ Example structure:
 
 ### Image quality vs task performance
 
-Improved perceptual quality (e.g., SSIM) does not always translate to better segmentation performance. Task-based metrics are essential for evaluating clinical relevance.
+Improved perceptual quality does not always translate to better segmentation performance. Task-based metrics are essential for evaluating clinical relevance.
 
 ### Failure cases
 

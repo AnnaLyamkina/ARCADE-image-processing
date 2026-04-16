@@ -28,7 +28,7 @@ def compute_snr_cnr(
     """
     Compute SNR and CNR from vessel and background ROIs.
 
-    SNR = std(vessel) / std(background)
+    background SNR = mean(background) / std(background)
     CNR = |mean(vessel) - mean(background)| / std(background)
 
     Background is defined as non-vessel pixels outside the frame border (visible artifact).
@@ -66,7 +66,7 @@ def compute_snr_cnr(
     if noise_std < 1e-9:
         return {"snr": float("nan"), "cnr": float("nan")}
 
-    snr = float(np.std(vessel_pixels)) / noise_std
+    snr = float(np.mean(bg_pixels)) / noise_std
     cnr = float(abs(np.mean(vessel_pixels) - np.mean(bg_pixels))) / noise_std
 
     return {"snr": snr, "cnr": cnr}

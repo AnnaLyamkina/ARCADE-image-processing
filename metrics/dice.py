@@ -20,7 +20,7 @@ def compute_dice(
     threshold: float = 0.15,
     dilate_radius: int = 1,
     return_map: bool = False
-) -> float:
+) -> tuple[float, float, float] | tuple[float, float, float, np.ndarray]:
     """
     Compute Dice score between binarised vesselness map and ground truth mask.
 
@@ -34,21 +34,24 @@ def compute_dice(
         Threshold for binarising vesselness map
     dilate_radius: int
         Dilation of vesselnessmap to account for frangi centerline detection
+    return_map : bool
+        If True, return a binary mask for visualization
     Returns
     -------
-    float — Dice score in [0, 1], higher is better.
+    tuple of (dice, precision, recall).
+    If return_map=True, returns (dice, precision, recall, pred).
     """
     pred = binarise_vesselness(vesselness, threshold, dilate_radius)
 
-    intersection = (pred & mask).sum()
-    denominator = pred.sum() + mask.sum()
+    tp = np.sum((pred == 1) & (mask == 1))
+    fp = np.sum((pred == 1) & (mask == 0))
+    fn = np.sum((pred == 0) & (mask == 1))
 
-    if denominator == 0:
-        return float("nan")
-    
-    dice = float(2 * intersection / denominator)
+    precision = tp / (tp + fp + 1e-8)
+    recall = tp / (tp + fn + 1e-8)
+    dice = 2*tp / (2*tp + fp + fn)
     
     if return_map:
-        return dice, pred
+        return precision, recall, dice, pred
     else:
-        return dice
+        return precision, recall, dice
