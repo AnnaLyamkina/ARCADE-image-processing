@@ -32,8 +32,7 @@ def reduce_dose(
 
     counts = image.astype(np.float64) * N0 * f
     noisy_counts = np.random.poisson(counts)
-    result = noisy_counts / (f * N0)
-    return np.clip(result, 0, 1).astype(np.float32)
+    return np.clip(noisy_counts / (f * N0), 0, 1).astype(np.float32)
 
 def load_noisy(filename, f):
     if f == 1.0:

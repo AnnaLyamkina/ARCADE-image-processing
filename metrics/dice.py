@@ -38,8 +38,8 @@ def compute_dice(
         If True, return a binary mask for visualization
     Returns
     -------
-    tuple of (dice, precision, recall).
-    If return_map=True, returns (dice, precision, recall, pred).
+    tuple of (precision, recall, dice).
+    If return_map=True, returns (precision, recall, dice, pred).
     """
     pred = binarise_vesselness(vesselness, threshold, dilate_radius)
 

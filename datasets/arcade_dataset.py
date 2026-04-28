@@ -8,7 +8,10 @@ import cv2
 import numpy as np
 
 # visual control showed strong frame artifacts
-EXCLUDE_VAL_SAMPLES = ['58.png', '87.png', '111.png', '158.png', '189.png']
+EXCLUDE_SAMPLES = {
+    "val": ['58.png', '87.png', '111.png', '158.png', '189.png'],
+    "train": [],
+}
 
 class Sample(NamedTuple):
     """A single sample from the dataset: image, binary vessel mask, and file path."""
@@ -64,9 +67,12 @@ class ArcadeDataset:
                 self.image_id_to_polygons[img_id].append(polygon)
         
         # Image IDs in order
-        self.image_ids = sorted((img for img in self.coco["images"] 
-                                 if self.split == "val" and img["file_name"] not in EXCLUDE_VAL_SAMPLES), key=lambda x: x["id"])
-        # Build image_id -> filename and filename -> idx mapping
+        self.image_ids = sorted(
+            (img for img in self.coco["images"]
+            if img["file_name"] not in EXCLUDE_SAMPLES.get(self.split, [])),
+            key=lambda x: x["id"],
+        )
+# Build image_id -> filename and filename -> idx mapping
         self.image_id_to_path = {}
         self.filename_to_idx = {}
         # Build mappings from filtered list only
@@ -118,6 +124,6 @@ class ArcadeDataset:
         return Sample(image=img, mask=mask, path=img_path)
 
     def get_by_filename(self, filename: str) -> Sample:
-        if self.split == "val" and filename in EXCLUDE_VAL_SAMPLES:
+        if filename in EXCLUDE_SAMPLES.get(self.split, []):
             raise ValueError(f"{filename} is excluded from the dataset")
         return self[self.filename_to_idx[filename]]

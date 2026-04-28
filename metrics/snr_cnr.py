@@ -48,15 +48,9 @@ def compute_snr_cnr(
     dict with keys 'snr' and 'cnr'. Returns nan if ROI too small.
     """
 
-    # border_mask = np.zeros_like(mask)
-    # border_mask[margin:-margin, margin:-margin] = 1
-
-    # kernel = cv2.getStructuringElement(cv2.MORPH_ELLIPSE, (7, 7))
-    # dilated = cv2.dilate(mask, kernel, iterations=2)
     bg_mask = get_bg_mask(mask, margin)
 
     vessel_pixels = image[mask == 1]
-    #bg_pixels = image[(dilated == 0) & (border_mask == 1)]
     bg_pixels = image[bg_mask == 1]
 
     if len(vessel_pixels) < 10 or len(bg_pixels) < 10:
