@@ -10,6 +10,7 @@ This project evaluates classical filters and a self-supervised deep learning den
 > Do denoising methods actually improve vessel segmentation performance?
 
 Rather than relying on perceptual quality alone, this study benchmarks denoising approaches based on their impact on a downstream vessel segmentation pipeline.
+
 ---
 
 ## 2 Key Questions
@@ -109,6 +110,7 @@ We compare representative approaches from different paradigms:
 
 
 These methods span different levels of prior knowledge: from purely local filtering to learned data-driven denoising.
+
 ---
 
 ### 5.3 Segmentation pipeline
@@ -218,6 +220,7 @@ Improved perceptual quality does not always translate to better segmentation per
 ### 9.3 Annotation bias and metric interpretation
 
 Because ground truth annotations do not include all visible vessel structures, particularly fine vessels, some correct detections are treated as false positives. As a result, precision may be underestimated and recall overestimated. This bias must be considered when interpreting segmentation performance.
+
 ---
 
 ## 10 Conclusion
