@@ -1,0 +1,5 @@
+filter,mean_exec_time_s
+original,0.0002
+gaussian,0.0053
+bilateral,0.0143
+unet,0.5328
